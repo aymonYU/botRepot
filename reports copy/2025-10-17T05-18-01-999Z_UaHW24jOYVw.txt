@@ -1,0 +1,29 @@
+
+🎬 新视频分析报告
+
+标题：An AI Scammer Is Trying to Steal My Viewer's Money
+频道：The Plain Bagel
+发布时间：2025/8/31 00:00:46
+视频链接：https://www.youtube.com/watch?v=UaHW24jOYVw
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 内容摘要：
+```json
+{
+  "summary": "This video from \"The Plain Bagel\" serves as an urgent warning to their audience regarding a sophisticated AI-powered scam attempting to defraud their viewers. The creator has discovered a fraudulent video where their likeness, likely generated through advanced AI deepfake technology, is being used to solicit money or personal information from unsuspecting individuals. The core of the video will involve The Plain Bagel exposing this scam, demonstrating how the imposter v
+
+🎯 关键要点：
+1. ```json
+{
+  "summary": "This video from \"The Plain Bagel\" serves as an urgent warning to their audience regarding a sophisticated AI-powered scam attempting to defraud their viewers. The creator has
+
+💭 情感分析：😐 中性
+
+🏷️ 相关标签：
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+分析时间：2025/10/17 13:14:56
+这是一封自动生成的视频分析报告
+    

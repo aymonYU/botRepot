@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube 视频分析报告 - 汇总</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 32px;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #718096;
+      font-size: 16px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .stat-item {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 12px;
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    /* 频道筛选器 */
+    .channel-filter {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .filter-title {
+      font-size: 18px;
+      color: #2d3748;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .channel-avatars {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    .channel-avatars::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .channel-avatars::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 3px;
+    }
+
+    .channel-avatar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+      min-width: 80px;
+    }
+
+    .channel-avatar:hover {
+      transform: translateY(-5px);
+    }
+
+    .avatar-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 8px;
+      border: 3px solid transparent;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .channel-avatar.active .avatar-circle {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    .avatar-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #f56565;
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border: 2px solid white;
+    }
+
+    .channel-name {
+      font-size: 12px;
+      color: #4a5568;
+      text-align: center;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .channel-avatar.active .channel-name {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    /* 日期分组 */
+    .date-group {
+      margin-bottom: 30px;
+    }
+
+    .date-header {
+      background: white;
+      padding: 15px 25px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #2d3748;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    /* 视频卡片 */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .video-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .video-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .video-thumbnail {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+
+    .video-content {
+      padding: 20px;
+    }
+
+    .video-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .channel-tag {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .video-date {
+      color: #718096;
+      font-size: 13px;
+    }
+
+    .video-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      text-align: center;
+      display: block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .empty-state {
+      background: white;
+      border-radius: 20px;
+      padding: 60px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .empty-state-text {
+      font-size: 18px;
+      color: #718096;
+    }
+
+    @media (max-width: 768px) {
+      .video-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        flex-direction: column;
+      }
+
+      .channel-avatars {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <h1>📺 YouTube 视频分析报告</h1>
+      <p>AI 驱动的视频内容智能分析与汇总</p>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-label">总视频数</div>
+          <div class="stat-value">85</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">频道数</div>
+          <div class="stat-value">17</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">最新更新</div>
+          <div class="stat-value">今天</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 频道筛选器 -->
+    <div class="channel-filter">
+      <div class="filter-title">按 UP 主筛选</div>
+      <div class="channel-avatars">
+        <!-- 全部 -->
+        <div class="channel-avatar active" data-channel="all" onclick="filterByChannel('all')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            全部
+            <span class="avatar-badge">85</span>
+          </div>
+          <div class="channel-name">全部</div>
+        </div>
+        
+        
+        <div class="channel-avatar" data-channel="channel_1282338932" onclick="filterByChannel('channel_1282338932')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            L
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">learntoinvest</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_647182680" onclick="filterByChannel('channel_647182680')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            A
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Andrej Karpathy</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_1515572140" onclick="filterByChannel('channel_1515572140')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            T
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">The Swedish Investor</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_491400321" onclick="filterByChannel('channel_491400321')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            C
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">C&K GO!</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_541855532" onclick="filterByChannel('channel_541855532')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+            R
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Rational Investing with Cameron Stewart, CFA</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_1558950070" onclick="filterByChannel('channel_1558950070')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+            T
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">The Plain Bagel</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_2075590935" onclick="filterByChannel('channel_2075590935')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+            J
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Joseph Carlson</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_879131614" onclick="filterByChannel('channel_879131614')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+            美
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">美投讲美股</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_7930350" onclick="filterByChannel('channel_7930350')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%);">
+            A
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Adam Khoo</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_1319898616" onclick="filterByChannel('channel_1319898616')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
+            A
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">AI Foundations</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_291106719" onclick="filterByChannel('channel_291106719')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            P
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Principles by Ray Dalio</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_1944246402" onclick="filterByChannel('channel_1944246402')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            E
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">edureka!</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_321380539" onclick="filterByChannel('channel_321380539')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            A
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">ARK Invest</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_650362605" onclick="filterByChannel('channel_650362605')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            E
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Everything Money</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_1456401385" onclick="filterByChannel('channel_1456401385')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+            视
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">视野环球财经</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_2037794051" onclick="filterByChannel('channel_2037794051')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+            A
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Andrei Jikh</div>
+        </div>
+          
+        <div class="channel-avatar" data-channel="channel_1280583128" onclick="filterByChannel('channel_1280583128')">
+          <div class="avatar-circle" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+            K
+            <span class="avatar-badge">5</span>
+          </div>
+          <div class="channel-name">Ken Freeman, CFA</div>
+        </div>
+          
+      </div>
+    </div>
+
+    <!-- 视频列表 -->
+    <div id="videoList">
+      
+      <div class="date-group" data-date="2025-10-17">
+        <div class="date-header">
+          📅 今天
+        </div>
+        <div class="video-grid">
+          
+<div class="video-card" data-channel="channel_1282338932">
+  <img 
+    src="https://i.ytimg.com/vi/V8k-wBFcGlw/hqdefault.jpg" 
+    alt="PEHLA KADAM"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">PEHLA KADAM</div>
+    <div class="video-meta">
+      <span class="channel-tag">learntoinvest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-014Z_V8k-wBFcGlw.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=V8k-wBFcGlw')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1282338932">
+  <img 
+    src="https://i.ytimg.com/vi/2VTLaihqf1Y/hqdefault.jpg" 
+    alt="PEHLA KADAM"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">PEHLA KADAM</div>
+    <div class="video-meta">
+      <span class="channel-tag">learntoinvest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-013Z_2VTLaihqf1Y.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=2VTLaihqf1Y')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1282338932">
+  <img 
+    src="https://i.ytimg.com/vi/uGeISgUe32A/hqdefault.jpg" 
+    alt="PEHLA KADAM"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">PEHLA KADAM</div>
+    <div class="video-meta">
+      <span class="channel-tag">learntoinvest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-013Z_uGeISgUe32A.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=uGeISgUe32A')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1282338932">
+  <img 
+    src="https://i.ytimg.com/vi/c3OtisWrpMw/hqdefault.jpg" 
+    alt="PEHLA KADAM"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">PEHLA KADAM</div>
+    <div class="video-meta">
+      <span class="channel-tag">learntoinvest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-012Z_c3OtisWrpMw.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=c3OtisWrpMw')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1282338932">
+  <img 
+    src="https://i.ytimg.com/vi/hH4s5kTVk4U/hqdefault.jpg" 
+    alt="PEHLA KADAM"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">PEHLA KADAM</div>
+    <div class="video-meta">
+      <span class="channel-tag">learntoinvest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-012Z_hH4s5kTVk4U.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=hH4s5kTVk4U')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_647182680">
+  <img 
+    src="https://i.ytimg.com/vi/zduSFxRajkE/hqdefault.jpg" 
+    alt="Let's build the GPT Tokenizer"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Let's build the GPT Tokenizer</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrej Karpathy</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-011Z_zduSFxRajkE.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=zduSFxRajkE')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_647182680">
+  <img 
+    src="https://i.ytimg.com/vi/zjkBMFhNj_g/hqdefault.jpg" 
+    alt="[1hr Talk] Intro to Large Language Models"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">[1hr Talk] Intro to Large Language Models</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrej Karpathy</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-011Z_zjkBMFhNj_g.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=zjkBMFhNj_g')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_647182680">
+  <img 
+    src="https://i.ytimg.com/vi/l8pRSuU81PU/hqdefault.jpg" 
+    alt="Let's reproduce GPT-2 (124M)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Let's reproduce GPT-2 (124M)</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrej Karpathy</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-010Z_l8pRSuU81PU.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=l8pRSuU81PU')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1515572140">
+  <img 
+    src="https://i.ytimg.com/vi/5bwypZkwl6c/hqdefault.jpg" 
+    alt="THE COMPOUND EFFECT - SUMMARY (BY DARREN HARDY)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">THE COMPOUND EFFECT - SUMMARY (BY DARREN HARDY)</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Swedish Investor</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-009Z_5bwypZkwl6c.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=5bwypZkwl6c')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_647182680">
+  <img 
+    src="https://i.ytimg.com/vi/7xTGNNLPyMI/hqdefault.jpg" 
+    alt="Deep Dive into LLMs like ChatGPT"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Deep Dive into LLMs like ChatGPT</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrej Karpathy</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-008Z_7xTGNNLPyMI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=7xTGNNLPyMI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_647182680">
+  <img 
+    src="https://i.ytimg.com/vi/EWvNQjAaOHw/hqdefault.jpg" 
+    alt="How I use LLMs"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">How I use LLMs</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrej Karpathy</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-007Z_EWvNQjAaOHw.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=EWvNQjAaOHw')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1515572140">
+  <img 
+    src="https://i.ytimg.com/vi/O9wuKLWQORs/hqdefault.jpg" 
+    alt="My 2024 Stock Market Results & 2025 US Stock Portfolio"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">My 2024 Stock Market Results & 2025 US Stock Portfolio</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Swedish Investor</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-007Z_O9wuKLWQORs.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=O9wuKLWQORs')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1515572140">
+  <img 
+    src="https://i.ytimg.com/vi/93ox6UYKryI/hqdefault.jpg" 
+    alt="10 Money Habits Keeping You Poor"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">10 Money Habits Keeping You Poor</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Swedish Investor</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-006Z_93ox6UYKryI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=93ox6UYKryI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1515572140">
+  <img 
+    src="https://i.ytimg.com/vi/37HErhv0PDw/hqdefault.jpg" 
+    alt="How to Tell When a Stock is Cheap/Expensive (Masterclass in Stock Valuation)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">How to Tell When a Stock is Cheap/Expensive (Masterclass in Stock Valuation)</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Swedish Investor</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-005Z_37HErhv0PDw.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=37HErhv0PDw')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1515572140">
+  <img 
+    src="https://i.ytimg.com/vi/XR57WlqX4iM/hqdefault.jpg" 
+    alt="THE BIG SECRET FOR THE SMALL INVESTOR – SUMMARY (JOEL GREENBLATT)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">THE BIG SECRET FOR THE SMALL INVESTOR – SUMMARY (JOEL GREENBLATT)</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Swedish Investor</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-005Z_XR57WlqX4iM.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=XR57WlqX4iM')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_491400321">
+  <img 
+    src="https://i.ytimg.com/vi/_TXuzd7-Z8U/hqdefault.jpg" 
+    alt="CK投資理財 | 就業數據神秘下調！印錢週期被迫開啟 - 如何應對？！"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">CK投資理財 | 就業數據神秘下調！印錢週期被迫開啟 - 如何應對？！</div>
+    <div class="video-meta">
+      <span class="channel-tag">C&K GO!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-004Z__TXuzd7-Z8U.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=_TXuzd7-Z8U')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_541855532">
+  <img 
+    src="https://i.ytimg.com/vi/3lEF-pgoFtg/hqdefault.jpg" 
+    alt="Trifecta Stock: Burry's Pick & Hockey Stick Returns! #shorts"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Trifecta Stock: Burry's Pick & Hockey Stick Returns! #shorts</div>
+    <div class="video-meta">
+      <span class="channel-tag">Rational Investing with Cameron Stewart, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-003Z_3lEF-pgoFtg.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=3lEF-pgoFtg')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_541855532">
+  <img 
+    src="https://i.ytimg.com/vi/trmtXO0B8fA/hqdefault.jpg" 
+    alt="Rare Stock: Equity with Bond-Like Collateral Explained #shorts"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Rare Stock: Equity with Bond-Like Collateral Explained #shorts</div>
+    <div class="video-meta">
+      <span class="channel-tag">Rational Investing with Cameron Stewart, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-003Z_trmtXO0B8fA.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=trmtXO0B8fA')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_541855532">
+  <img 
+    src="https://i.ytimg.com/vi/D-xk0x8bCgs/hqdefault.jpg" 
+    alt="Zero Debt Stock: $2.2B Cash Flow & Massive Upside! #shorts"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Zero Debt Stock: $2.2B Cash Flow & Massive Upside! #shorts</div>
+    <div class="video-meta">
+      <span class="channel-tag">Rational Investing with Cameron Stewart, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-002Z_D-xk0x8bCgs.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=D-xk0x8bCgs')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_541855532">
+  <img 
+    src="https://i.ytimg.com/vi/fb_0NB9S1ts/hqdefault.jpg" 
+    alt="Stock Opportunity: Safeguarding Cash in a Volatile Market #shorts"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Stock Opportunity: Safeguarding Cash in a Volatile Market #shorts</div>
+    <div class="video-meta">
+      <span class="channel-tag">Rational Investing with Cameron Stewart, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-002Z_fb_0NB9S1ts.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=fb_0NB9S1ts')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_491400321">
+  <img 
+    src="https://i.ytimg.com/vi/C-_DVqPDpmI/hqdefault.jpg" 
+    alt="CK投資理財 | 美股見頂信號！巴菲特是在等這個發生嗎？"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">CK投資理財 | 美股見頂信號！巴菲特是在等這個發生嗎？</div>
+    <div class="video-meta">
+      <span class="channel-tag">C&K GO!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-001Z_C-_DVqPDpmI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=C-_DVqPDpmI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_541855532">
+  <img 
+    src="https://i.ytimg.com/vi/8yOQAfsbiIs/hqdefault.jpg" 
+    alt="Massive Stock Buyback: Is This a Smart Investment? #shorts"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Massive Stock Buyback: Is This a Smart Investment? #shorts</div>
+    <div class="video-meta">
+      <span class="channel-tag">Rational Investing with Cameron Stewart, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-000Z_8yOQAfsbiIs.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=8yOQAfsbiIs')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1558950070">
+  <img 
+    src="https://i.ytimg.com/vi/yPxQJuGlm38/hqdefault.jpg" 
+    alt="Clearing Up the Inflation Target Misinformation"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Clearing Up the Inflation Target Misinformation</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Plain Bagel</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-02-000Z_yPxQJuGlm38.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=yPxQJuGlm38')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1558950070">
+  <img 
+    src="https://i.ytimg.com/vi/UaHW24jOYVw/hqdefault.jpg" 
+    alt="An AI Scammer Is Trying to Steal My Viewer's Money"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">An AI Scammer Is Trying to Steal My Viewer's Money</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Plain Bagel</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-999Z_UaHW24jOYVw.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=UaHW24jOYVw')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2075590935">
+  <img 
+    src="https://i.ytimg.com/vi/APkIKqJKrOk/hqdefault.jpg" 
+    alt="Google Just Won Its Case - What Investors Should Do Now"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Google Just Won Its Case - What Investors Should Do Now</div>
+    <div class="video-meta">
+      <span class="channel-tag">Joseph Carlson</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-998Z_APkIKqJKrOk.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=APkIKqJKrOk')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_491400321">
+  <img 
+    src="https://i.ytimg.com/vi/1UyN9aKHsuk/hqdefault.jpg" 
+    alt="CK投資理財 | 谷歌贏了反壟斷官司 - 對AI投資意味著什麼？"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">CK投資理財 | 谷歌贏了反壟斷官司 - 對AI投資意味著什麼？</div>
+    <div class="video-meta">
+      <span class="channel-tag">C&K GO!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-997Z_1UyN9aKHsuk.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=1UyN9aKHsuk')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_879131614">
+  <img 
+    src="https://i.ytimg.com/vi/vR9OpFJQ6Gg/hqdefault.jpg" 
+    alt="云巨头一家崛起，一家注定被颠覆，一家等待爆发！AI时代，云计算如何重塑整个科技股格局？"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">云巨头一家崛起，一家注定被颠覆，一家等待爆发！AI时代，云计算如何重塑整个科技股格局？</div>
+    <div class="video-meta">
+      <span class="channel-tag">美投讲美股</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-997Z_vR9OpFJQ6Gg.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=vR9OpFJQ6Gg')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2075590935">
+  <img 
+    src="https://i.ytimg.com/vi/xi9TQ4rvRBk/hqdefault.jpg" 
+    alt="I’m Buying $10,000 Of This Stock, Here’s Why"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">I’m Buying $10,000 Of This Stock, Here’s Why</div>
+    <div class="video-meta">
+      <span class="channel-tag">Joseph Carlson</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-996Z_xi9TQ4rvRBk.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=xi9TQ4rvRBk')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1558950070">
+  <img 
+    src="https://i.ytimg.com/vi/4GzsSoE7OiI/hqdefault.jpg" 
+    alt="Are Trump's Tariffs Working?"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Are Trump's Tariffs Working?</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Plain Bagel</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-995Z_4GzsSoE7OiI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=4GzsSoE7OiI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_7930350">
+  <img 
+    src="https://i.ytimg.com/vi/f9qPbjgFUj4/hqdefault.jpg" 
+    alt="Rate Cuts Coming! What's Next for Stocks & Bonds?"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Rate Cuts Coming! What's Next for Stocks & Bonds?</div>
+    <div class="video-meta">
+      <span class="channel-tag">Adam Khoo</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-995Z_f9qPbjgFUj4.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=f9qPbjgFUj4')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_7930350">
+  <img 
+    src="https://i.ytimg.com/vi/rna-Dz8l5Hs/hqdefault.jpg" 
+    alt="Will I invest in Lululemon (LULU Stock) now, after a -70% drop?"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Will I invest in Lululemon (LULU Stock) now, after a -70% drop?</div>
+    <div class="video-meta">
+      <span class="channel-tag">Adam Khoo</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-994Z_rna-Dz8l5Hs.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=rna-Dz8l5Hs')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_7930350">
+  <img 
+    src="https://i.ytimg.com/vi/izCFCSs60h0/hqdefault.jpg" 
+    alt="Will I Buy Duolingo (DUOL Stock) Today?"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Will I Buy Duolingo (DUOL Stock) Today?</div>
+    <div class="video-meta">
+      <span class="channel-tag">Adam Khoo</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-993Z_izCFCSs60h0.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=izCFCSs60h0')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2075590935">
+  <img 
+    src="https://i.ytimg.com/vi/M6Aq_8TLROs/hqdefault.jpg" 
+    alt="What I'm Buying And Selling In my $1.3 Million Portfolio"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">What I'm Buying And Selling In my $1.3 Million Portfolio</div>
+    <div class="video-meta">
+      <span class="channel-tag">Joseph Carlson</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-992Z_M6Aq_8TLROs.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=M6Aq_8TLROs')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_491400321">
+  <img 
+    src="https://i.ytimg.com/vi/V7sGnK7jENE/hqdefault.jpg" 
+    alt="CK投資理財 | 中產階級最後一次財富自由的機會！要來了!【CC中文字幕】"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">CK投資理財 | 中產階級最後一次財富自由的機會！要來了!【CC中文字幕】</div>
+    <div class="video-meta">
+      <span class="channel-tag">C&K GO!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-991Z_V7sGnK7jENE.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=V7sGnK7jENE')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_879131614">
+  <img 
+    src="https://i.ytimg.com/vi/Q-qhH9zUfq4/hqdefault.jpg" 
+    alt="美股为何跌不下来？诡异循环正带动美股盲目上涨？一大变量将彻底改变上涨逻辑！"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">美股为何跌不下来？诡异循环正带动美股盲目上涨？一大变量将彻底改变上涨逻辑！</div>
+    <div class="video-meta">
+      <span class="channel-tag">美投讲美股</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-990Z_Q-qhH9zUfq4.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=Q-qhH9zUfq4')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1319898616">
+  <img 
+    src="https://i.ytimg.com/vi/PmzrQN6D8uY/hqdefault.jpg" 
+    alt="How to Make $347/day as a Prompt Engineer (For Beginners)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">How to Make $347/day as a Prompt Engineer (For Beginners)</div>
+    <div class="video-meta">
+      <span class="channel-tag">AI Foundations</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-989Z_PmzrQN6D8uY.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=PmzrQN6D8uY')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1319898616">
+  <img 
+    src="https://i.ytimg.com/vi/fQ1QMtjAexA/hqdefault.jpg" 
+    alt="The Quickest Path to Your AI Success! (AI Foundations)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">The Quickest Path to Your AI Success! (AI Foundations)</div>
+    <div class="video-meta">
+      <span class="channel-tag">AI Foundations</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-988Z_fQ1QMtjAexA.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=fQ1QMtjAexA')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1558950070">
+  <img 
+    src="https://i.ytimg.com/vi/CnoDKqlcR4Y/hqdefault.jpg" 
+    alt="Why Central Banks Target 2% Inflation"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Why Central Banks Target 2% Inflation</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Plain Bagel</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-987Z_CnoDKqlcR4Y.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=CnoDKqlcR4Y')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_879131614">
+  <img 
+    src="https://i.ytimg.com/vi/QOwSM0_Mu7k/hqdefault.jpg" 
+    alt="普通人最难掌握的投资之道：查理芒格的投资哲学"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">普通人最难掌握的投资之道：查理芒格的投资哲学</div>
+    <div class="video-meta">
+      <span class="channel-tag">美投讲美股</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-987Z_QOwSM0_Mu7k.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=QOwSM0_Mu7k')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_291106719">
+  <img 
+    src="https://i.ytimg.com/vi/SyOD5WLwb0I/hqdefault.jpg" 
+    alt="How the Economic Machine Works - Part 4"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">How the Economic Machine Works - Part 4</div>
+    <div class="video-meta">
+      <span class="channel-tag">Principles by Ray Dalio</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-986Z_SyOD5WLwb0I.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=SyOD5WLwb0I')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1319898616">
+  <img 
+    src="https://i.ytimg.com/vi/7o_mCOqxFOM/hqdefault.jpg" 
+    alt="Automate ANY task using AI Agents in n8n! (full system)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Automate ANY task using AI Agents in n8n! (full system)</div>
+    <div class="video-meta">
+      <span class="channel-tag">AI Foundations</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-985Z_7o_mCOqxFOM.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=7o_mCOqxFOM')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2075590935">
+  <img 
+    src="https://i.ytimg.com/vi/XuIVc5pDN5c/hqdefault.jpg" 
+    alt="The Stock Market Is Overvalued, Here's What I'm Doing Now"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">The Stock Market Is Overvalued, Here's What I'm Doing Now</div>
+    <div class="video-meta">
+      <span class="channel-tag">Joseph Carlson</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-985Z_XuIVc5pDN5c.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=XuIVc5pDN5c')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_291106719">
+  <img 
+    src="https://i.ytimg.com/vi/-1_3Jg_ARKo/hqdefault.jpg" 
+    alt="Ray Dalio on the Legitimacy of Bitcoin"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Ray Dalio on the Legitimacy of Bitcoin</div>
+    <div class="video-meta">
+      <span class="channel-tag">Principles by Ray Dalio</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-984Z_-1_3Jg_ARKo.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=-1_3Jg_ARKo')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1944246402">
+  <img 
+    src="https://i.ytimg.com/vi/xPh5ihBWang/hqdefault.jpg" 
+    alt="Data Science & AI Full Course - Learn Data Science in 12 Hour | Data Science For Beginners | Edureka"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Data Science & AI Full Course - Learn Data Science in 12 Hour | Data Science For Beginners | Edureka</div>
+    <div class="video-meta">
+      <span class="channel-tag">edureka!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-984Z_xPh5ihBWang.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=xPh5ihBWang')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_321380539">
+  <img 
+    src="https://i.ytimg.com/vi/K4Q0Uztugok/hqdefault.jpg" 
+    alt="Government Shutdown | ITK With Cathie Wood"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Government Shutdown | ITK With Cathie Wood</div>
+    <div class="video-meta">
+      <span class="channel-tag">ARK Invest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-983Z_K4Q0Uztugok.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=K4Q0Uztugok')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_491400321">
+  <img 
+    src="https://i.ytimg.com/vi/Bh7lyo1qVWk/hqdefault.jpg" 
+    alt="CK投資理財 | 無限印錢模式，全是贏家！所以誰輸了？"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">CK投資理財 | 無限印錢模式，全是贏家！所以誰輸了？</div>
+    <div class="video-meta">
+      <span class="channel-tag">C&K GO!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-982Z_Bh7lyo1qVWk.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=Bh7lyo1qVWk')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_879131614">
+  <img 
+    src="https://i.ytimg.com/vi/OVrBDuKtGPE/hqdefault.jpg" 
+    alt="SORA2大火！META为何流血不止？OpenAI野心到底在哪？为何Meta注定被颠覆？"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">SORA2大火！META为何流血不止？OpenAI野心到底在哪？为何Meta注定被颠覆？</div>
+    <div class="video-meta">
+      <span class="channel-tag">美投讲美股</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-981Z_OVrBDuKtGPE.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=OVrBDuKtGPE')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_291106719">
+  <img 
+    src="https://i.ytimg.com/vi/Wk8VyBkOsuU/hqdefault.jpg" 
+    alt="Why We Are at an Inflection Point with U.S. Debt"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Why We Are at an Inflection Point with U.S. Debt</div>
+    <div class="video-meta">
+      <span class="channel-tag">Principles by Ray Dalio</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-980Z_Wk8VyBkOsuU.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=Wk8VyBkOsuU')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1319898616">
+  <img 
+    src="https://i.ytimg.com/vi/rBMtz5YEGAk/hqdefault.jpg" 
+    alt="OpenAI Update: Building Agents using NEW Agent Builder!"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">OpenAI Update: Building Agents using NEW Agent Builder!</div>
+    <div class="video-meta">
+      <span class="channel-tag">AI Foundations</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-980Z_rBMtz5YEGAk.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=rBMtz5YEGAk')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1944246402">
+  <img 
+    src="https://i.ytimg.com/vi/RPoGqy_mv3s/hqdefault.jpg" 
+    alt="AI Agents Full Course 2025 | AI Agents Tutorial For Beginners | Agentic AI Course | Edureka Live"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">AI Agents Full Course 2025 | AI Agents Tutorial For Beginners | Agentic AI Course | Edureka Live</div>
+    <div class="video-meta">
+      <span class="channel-tag">edureka!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-979Z_RPoGqy_mv3s.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=RPoGqy_mv3s')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_7930350">
+  <img 
+    src="https://i.ytimg.com/vi/TcJMozGbzvQ/hqdefault.jpg" 
+    alt="Prepare for the Great Bubble Burst Part 1 of 2"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Prepare for the Great Bubble Burst Part 1 of 2</div>
+    <div class="video-meta">
+      <span class="channel-tag">Adam Khoo</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-978Z_TcJMozGbzvQ.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=TcJMozGbzvQ')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_7930350">
+  <img 
+    src="https://i.ytimg.com/vi/lGbGJNbcl-A/hqdefault.jpg" 
+    alt="Prepare for the Great Bubble Burst Part 2 of 2"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Prepare for the Great Bubble Burst Part 2 of 2</div>
+    <div class="video-meta">
+      <span class="channel-tag">Adam Khoo</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-978Z_lGbGJNbcl-A.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=lGbGJNbcl-A')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_291106719">
+  <img 
+    src="https://i.ytimg.com/vi/zXNu4COnJ4g/hqdefault.jpg" 
+    alt="Why I'm Pessimistic About the Debt Problem"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Why I'm Pessimistic About the Debt Problem</div>
+    <div class="video-meta">
+      <span class="channel-tag">Principles by Ray Dalio</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-977Z_zXNu4COnJ4g.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=zXNu4COnJ4g')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1319898616">
+  <img 
+    src="https://i.ytimg.com/vi/Qf_9mUrmMi8/hqdefault.jpg" 
+    alt="How to Connect NEW Agent Builder to n8n! (MCP integration)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">How to Connect NEW Agent Builder to n8n! (MCP integration)</div>
+    <div class="video-meta">
+      <span class="channel-tag">AI Foundations</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-976Z_Qf_9mUrmMi8.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=Qf_9mUrmMi8')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_650362605">
+  <img 
+    src="https://i.ytimg.com/vi/EC37QY0GWTA/hqdefault.jpg" 
+    alt="3 Stocks to Buy HEAVY Before Nov ’25"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">3 Stocks to Buy HEAVY Before Nov ’25</div>
+    <div class="video-meta">
+      <span class="channel-tag">Everything Money</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-975Z_EC37QY0GWTA.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=EC37QY0GWTA')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_321380539">
+  <img 
+    src="https://i.ytimg.com/vi/pUUfuvM3slw/hqdefault.jpg" 
+    alt="Will This Recovery Last?"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Will This Recovery Last?</div>
+    <div class="video-meta">
+      <span class="channel-tag">ARK Invest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-975Z_pUUfuvM3slw.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=pUUfuvM3slw')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1944246402">
+  <img 
+    src="https://i.ytimg.com/vi/5oDhKQ4tHbI/hqdefault.jpg" 
+    alt="Machine Learning Full Course 2025 | Machine Learning Tutorial | Machine Learning Roadmap | Edureka"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Machine Learning Full Course 2025 | Machine Learning Tutorial | Machine Learning Roadmap | Edureka</div>
+    <div class="video-meta">
+      <span class="channel-tag">edureka!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-974Z_5oDhKQ4tHbI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=5oDhKQ4tHbI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_321380539">
+  <img 
+    src="https://i.ytimg.com/vi/zUK5cD6R6gU/hqdefault.jpg" 
+    alt="AMD And OpenAI | The Brainstorm EP 104"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">AMD And OpenAI | The Brainstorm EP 104</div>
+    <div class="video-meta">
+      <span class="channel-tag">ARK Invest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-973Z_zUK5cD6R6gU.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=zUK5cD6R6gU')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1558950070">
+  <img 
+    src="https://i.ytimg.com/vi/_D4Xwpa4trE/hqdefault.jpg" 
+    alt="Investment Analyst Reacts to Finance TikToks - Bonus Edition"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Investment Analyst Reacts to Finance TikToks - Bonus Edition</div>
+    <div class="video-meta">
+      <span class="channel-tag">The Plain Bagel</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-971Z__D4Xwpa4trE.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=_D4Xwpa4trE')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_291106719">
+  <img 
+    src="https://i.ytimg.com/vi/iQ7p9As_WUI/hqdefault.jpg" 
+    alt="If you’re worried, you don’t need to worry — and if you’re not worried, you need to worry."
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">If you’re worried, you don’t need to worry — and if you’re not worried, you need to worry.</div>
+    <div class="video-meta">
+      <span class="channel-tag">Principles by Ray Dalio</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-971Z_iQ7p9As_WUI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=iQ7p9As_WUI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1456401385">
+  <img 
+    src="https://i.ytimg.com/vi/sNVJ-672Ytg/hqdefault.jpg" 
+    alt="美股 四月噩梦？TACO星期……？大盘、半导体、权重点位！计划内减仓GOOG！"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">美股 四月噩梦？TACO星期……？大盘、半导体、权重点位！计划内减仓GOOG！</div>
+    <div class="video-meta">
+      <span class="channel-tag">视野环球财经</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-970Z_sNVJ-672Ytg.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=sNVJ-672Ytg')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_650362605">
+  <img 
+    src="https://i.ytimg.com/vi/8ZllCsuVEaM/hqdefault.jpg" 
+    alt="This “ALWAYS” Ends in a Stock Market Crash (IT’S TOO LATE)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">This “ALWAYS” Ends in a Stock Market Crash (IT’S TOO LATE)</div>
+    <div class="video-meta">
+      <span class="channel-tag">Everything Money</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-969Z_8ZllCsuVEaM.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=8ZllCsuVEaM')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2037794051">
+  <img 
+    src="https://i.ytimg.com/vi/mJiuQvTE4L4/hqdefault.jpg" 
+    alt="Total Surveillance Disguised as Security (Digital IDs)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Total Surveillance Disguised as Security (Digital IDs)</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrei Jikh</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-969Z_mJiuQvTE4L4.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=mJiuQvTE4L4')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_879131614">
+  <img 
+    src="https://i.ytimg.com/vi/7d1r_fiMMRA/hqdefault.jpg" 
+    alt="关于创业，关于赚钱，关于个人成长的故事"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">关于创业，关于赚钱，关于个人成长的故事</div>
+    <div class="video-meta">
+      <span class="channel-tag">美投讲美股</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-968Z_7d1r_fiMMRA.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=7d1r_fiMMRA')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2037794051">
+  <img 
+    src="https://i.ytimg.com/vi/KFLKI35TPkM/hqdefault.jpg" 
+    alt="Why Digital IDs Could Redefine Freedom"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Why Digital IDs Could Redefine Freedom</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrei Jikh</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-967Z_KFLKI35TPkM.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=KFLKI35TPkM')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_650362605">
+  <img 
+    src="https://i.ytimg.com/vi/CpLIcfAEz7w/hqdefault.jpg" 
+    alt="This Stock Market Crash Will Make Normal People Millionaires (DO THIS NOW!)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">This Stock Market Crash Will Make Normal People Millionaires (DO THIS NOW!)</div>
+    <div class="video-meta">
+      <span class="channel-tag">Everything Money</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-966Z_CpLIcfAEz7w.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=CpLIcfAEz7w')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1944246402">
+  <img 
+    src="https://i.ytimg.com/vi/1NvwSx_Sj9o/hqdefault.jpg" 
+    alt="AI for Business Full course in 11 Hours [ 2025] | How AI Could Empower Businesses | Edureka Live"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">AI for Business Full course in 11 Hours [ 2025] | How AI Could Empower Businesses | Edureka Live</div>
+    <div class="video-meta">
+      <span class="channel-tag">edureka!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-965Z_1NvwSx_Sj9o.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=1NvwSx_Sj9o')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2075590935">
+  <img 
+    src="https://i.ytimg.com/vi/QwwVJfvfqN8/hqdefault.jpg" 
+    alt="Top Five AI Stocks I'm Buying Now"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Top Five AI Stocks I'm Buying Now</div>
+    <div class="video-meta">
+      <span class="channel-tag">Joseph Carlson</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-964Z_QwwVJfvfqN8.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=QwwVJfvfqN8')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2037794051">
+  <img 
+    src="https://i.ytimg.com/vi/biyOHYua-1w/hqdefault.jpg" 
+    alt="The United States Is Buying Stocks (China’s Playbook 2.0)"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">The United States Is Buying Stocks (China’s Playbook 2.0)</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrei Jikh</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-964Z_biyOHYua-1w.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=biyOHYua-1w')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1456401385">
+  <img 
+    src="https://i.ytimg.com/vi/H3bLHgQM2zI/hqdefault.jpg" 
+    alt="美股 OpenAI 金手指点到AVGO！AMD、NVDA估值更新！TSM供应链受影响吗？GOOG、TSLA、AMZN！CTA变化！"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">美股 OpenAI 金手指点到AVGO！AMD、NVDA估值更新！TSM供应链受影响吗？GOOG、TSLA、AMZN！CTA变化！</div>
+    <div class="video-meta">
+      <span class="channel-tag">视野环球财经</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-963Z_H3bLHgQM2zI.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=H3bLHgQM2zI')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_321380539">
+  <img 
+    src="https://i.ytimg.com/vi/W2jviAppxOM/hqdefault.jpg" 
+    alt="US Manufacturing Revival"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">US Manufacturing Revival</div>
+    <div class="video-meta">
+      <span class="channel-tag">ARK Invest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-962Z_W2jviAppxOM.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=W2jviAppxOM')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_650362605">
+  <img 
+    src="https://i.ytimg.com/vi/3QKBk2nGyc4/hqdefault.jpg" 
+    alt="URGENT WARNING: The AI Stock Market Crash is Coming SOON!"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">URGENT WARNING: The AI Stock Market Crash is Coming SOON!</div>
+    <div class="video-meta">
+      <span class="channel-tag">Everything Money</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-961Z_3QKBk2nGyc4.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=3QKBk2nGyc4')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1456401385">
+  <img 
+    src="https://i.ytimg.com/vi/MjDgqSdzx1Y/hqdefault.jpg" 
+    alt="美股 ORCL和AMD好上了！NVDA躺枪！JPM、WFC财报！信息混乱，猴市休息！"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">美股 ORCL和AMD好上了！NVDA躺枪！JPM、WFC财报！信息混乱，猴市休息！</div>
+    <div class="video-meta">
+      <span class="channel-tag">视野环球财经</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-961Z_MjDgqSdzx1Y.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=MjDgqSdzx1Y')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1944246402">
+  <img 
+    src="https://i.ytimg.com/vi/NtUqYEWdGoQ/hqdefault.jpg" 
+    alt="Deep Learning Full Course - Learn Deep Learning - 10 Hours [2025] | Deep Learning Tutorial | Edureka"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Deep Learning Full Course - Learn Deep Learning - 10 Hours [2025] | Deep Learning Tutorial | Edureka</div>
+    <div class="video-meta">
+      <span class="channel-tag">edureka!</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-960Z_NtUqYEWdGoQ.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=NtUqYEWdGoQ')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2037794051">
+  <img 
+    src="https://i.ytimg.com/vi/mXdRCyFqeio/hqdefault.jpg" 
+    alt="The US Is Buying Stocks"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">The US Is Buying Stocks</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrei Jikh</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-958Z_mXdRCyFqeio.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=mXdRCyFqeio')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1280583128">
+  <img 
+    src="https://i.ytimg.com/vi/el5sqo6fSio/hqdefault.jpg" 
+    alt="Street: UBS (Neutral, $25) 🧯"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Street: UBS (Neutral, $25) 🧯</div>
+    <div class="video-meta">
+      <span class="channel-tag">Ken Freeman, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-953Z_el5sqo6fSio.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=el5sqo6fSio')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1280583128">
+  <img 
+    src="https://i.ytimg.com/vi/VOuMz-7N5q0/hqdefault.jpg" 
+    alt="Street Snapshot 🧠"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Street Snapshot 🧠</div>
+    <div class="video-meta">
+      <span class="channel-tag">Ken Freeman, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-949Z_VOuMz-7N5q0.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=VOuMz-7N5q0')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1456401385">
+  <img 
+    src="https://i.ytimg.com/vi/EfS_sjCfRp4/hqdefault.jpg" 
+    alt="美股 ASML财报、BAC更新！计划内减仓AMD！百年数据：10月最低点哪天？"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">美股 ASML财报、BAC更新！计划内减仓AMD！百年数据：10月最低点哪天？</div>
+    <div class="video-meta">
+      <span class="channel-tag">视野环球财经</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-947Z_EfS_sjCfRp4.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=EfS_sjCfRp4')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_650362605">
+  <img 
+    src="https://i.ytimg.com/vi/20PT-O46nkc/hqdefault.jpg" 
+    alt="The Next Nvidia? AI Stock to Buy BEFORE Explosive Growth!"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">The Next Nvidia? AI Stock to Buy BEFORE Explosive Growth!</div>
+    <div class="video-meta">
+      <span class="channel-tag">Everything Money</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-944Z_20PT-O46nkc.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=20PT-O46nkc')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1280583128">
+  <img 
+    src="https://i.ytimg.com/vi/cIIABs-s_lY/hqdefault.jpg" 
+    alt="My Take: No Position; Foundry Is the Ballgame 🏭"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">My Take: No Position; Foundry Is the Ballgame 🏭</div>
+    <div class="video-meta">
+      <span class="channel-tag">Ken Freeman, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-942Z_cIIABs-s_lY.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=cIIABs-s_lY')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1280583128">
+  <img 
+    src="https://i.ytimg.com/vi/zOIloS4FlCY/hqdefault.jpg" 
+    alt="Cash Cushion & The Jockey 🐎"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Cash Cushion & The Jockey 🐎</div>
+    <div class="video-meta">
+      <span class="channel-tag">Ken Freeman, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-939Z_zOIloS4FlCY.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=zOIloS4FlCY')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1280583128">
+  <img 
+    src="https://i.ytimg.com/vi/MQAEb4Xg7CE/hqdefault.jpg" 
+    alt="52-Week & Buy Plan 🎯"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">52-Week & Buy Plan 🎯</div>
+    <div class="video-meta">
+      <span class="channel-tag">Ken Freeman, CFA</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-938Z_MQAEb4Xg7CE.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=MQAEb4Xg7CE')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_321380539">
+  <img 
+    src="https://i.ytimg.com/vi/iAv7kEAqgvY/hqdefault.jpg" 
+    alt="Ethereum’s Big Moment With Tom Lee"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">Ethereum’s Big Moment With Tom Lee</div>
+    <div class="video-meta">
+      <span class="channel-tag">ARK Invest</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-938Z_iAv7kEAqgvY.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=iAv7kEAqgvY')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_2037794051">
+  <img 
+    src="https://i.ytimg.com/vi/8Hrj_KXXBhQ/hqdefault.jpg" 
+    alt="The Government Just Entered the Stock Market"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">The Government Just Entered the Stock Market</div>
+    <div class="video-meta">
+      <span class="channel-tag">Andrei Jikh</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-937Z_8Hrj_KXXBhQ.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=8Hrj_KXXBhQ')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+<div class="video-card" data-channel="channel_1456401385">
+  <img 
+    src="https://i.ytimg.com/vi/7yZQox-MeBA/hqdefault.jpg" 
+    alt="美股 TSM上调前瞻，减仓计划！TRV保费放缓，上车不变！VIX回到22上方！信贷“蟑螂”又来了！"
+    class="video-thumbnail"
+    onerror="this.src='https://via.placeholder.com/400x200?text=No+Thumbnail'"
+  />
+  <div class="video-content">
+    <div class="video-title">美股 TSM上调前瞻，减仓计划！TRV保费放缓，上车不变！VIX回到22上方！信贷“蟑螂”又来了！</div>
+    <div class="video-meta">
+      <span class="channel-tag">视野环球财经</span>
+      <span class="video-date">7分钟前</span>
+    </div>
+    <div class="video-actions">
+      <button class="btn btn-primary" onclick="viewReport('2025-10-17T05-18-01-936Z_7yZQox-MeBA.html')">
+        📄 查看报告
+      </button>
+      <button class="btn btn-secondary" onclick="openVideo('https://www.youtube.com/watch?v=7yZQox-MeBA')">
+        ▶️ 观看视频
+      </button>
+    </div>
+  </div>
+</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    // 当前选中的频道
+    let currentChannel = 'all';
+
+    // 按频道筛选
+    function filterByChannel(channelId) {
+      currentChannel = channelId;
+      
+      // 更新激活状态
+      document.querySelectorAll('.channel-avatar').forEach(avatar => {
+        avatar.classList.remove('active');
+      });
+      document.querySelector(`[data-channel="${channelId}"]`).classList.add('active');
+      
+      // 筛选视频
+      const allCards = document.querySelectorAll('.video-card');
+      const allDateGroups = document.querySelectorAll('.date-group');
+      
+      if (channelId === 'all') {
+        allCards.forEach(card => card.style.display = 'block');
+        allDateGroups.forEach(group => group.style.display = 'block');
+      } else {
+        allCards.forEach(card => {
+          const cardChannel = card.getAttribute('data-channel');
+          card.style.display = cardChannel === channelId ? 'block' : 'none';
+        });
+        
+        // 隐藏没有视频的日期组
+        allDateGroups.forEach(group => {
+          const visibleCards = group.querySelectorAll(`.video-card[data-channel="${channelId}"]`);
+          group.style.display = visibleCards.length > 0 ? 'block' : 'none';
+        });
+      }
+    }
+
+    // 打开视频
+    function openVideo(url) {
+      window.open(url, '_blank');
+    }
+
+    // 查看报告
+    function viewReport(path) {
+      window.open(path, '_blank');
+    }
+
+    // 页面加载完成
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('📊 报告索引加载完成');
+      console.log('视频总数:', 85);
+      console.log('频道数:', 17);
+    });
+  </script>
+</body>
+</html>

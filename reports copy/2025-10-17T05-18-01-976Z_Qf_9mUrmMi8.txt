@@ -1,0 +1,29 @@
+
+🎬 新视频分析报告
+
+标题：How to Connect NEW Agent Builder to n8n! (MCP integration)
+频道：AI Foundations
+发布时间：2025/10/9 09:03:47
+视频链接：https://www.youtube.com/watch?v=Qf_9mUrmMi8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 内容摘要：
+本视频详细演示了如何将 OpenAI 的 Agent Builder 与 n8n 平台进行连接，核心是通过 n8n 的 MCP（Messaging Connector Protocol）集成实现。视频强调了这一集成的重要价值，即能够让 Agent Builder 的工作流访问并利用 n8n 平台上的超过 500 种工具，从而极大地扩展 AI 代理的功能和自动化能力。内容涵盖了从如何联系 n8n 的 MCP、构建 MCP 代理、创建 n8n MCP 触发器，到最终将 n8n 与 Agent Builder 连接起来的完整分步指南。视频中还通过连接 Google Calendar 的实际案例，展示了该集成在日程管理等方面的应用潜力。整体而言，该视频为希望提升 AI 代理复杂性和自动化水平的用户提供了一个清晰且实用的解决方案，并通过提供折扣课程和社区链接，鼓励观众进一步学习和参与。
+
+🎯 关键要点：
+1. 演示了如何通过 n8n 的 MCP 集成将 OpenAI Agent Builder 与 n8n 连接。
+2. 强调该集成能让 Agent Builder 访问 n8n 的 500+ 工具，显著增强AI代理功能。
+3. 提供了从设置 MCP 代理到创建 n8n 触发器，再到 Agent Builder 连接的详细步骤。
+4. 通过连接 Google Calendar 的实际案例，展示了集成的实用价值和应用场景。
+5. 旨在赋能用户，提升AI代理的自动化水平和复杂工作流处理能力。
+
+💭 情感分析：😊 积极正面
+
+🏷️ 相关标签：#agentbuilder #n8n #aiagents #MCPintegration #automation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+分析时间：2025/10/17 13:11:32
+这是一封自动生成的视频分析报告
+    

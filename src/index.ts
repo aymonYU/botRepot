@@ -60,6 +60,34 @@ app.post('/api/check', async (c) => {
   }
 });
 
+// 手动生成报告索引
+app.post('/api/generate-index', async (c) => {
+  try {
+    logger.info('收到手动生成索引请求');
+    
+    const { ReportIndexGenerator } = await import('@/utils/report-index');
+    const { join } = await import('path');
+    
+    const reportsDir = join(process.cwd(), 'reports');
+    const generator = new ReportIndexGenerator(reportsDir);
+    generator.generateIndex();
+
+    return c.json({
+      success: true,
+      message: '报告索引页面已生成',
+      path: 'reports/index.html',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('生成索引失败', error);
+    return c.json({
+      success: false,
+      message: '生成索引失败',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }, 500);
+  }
+});
+
 // 启动调度器端点
 app.post('/api/scheduler/start', async (c) => {
   try {

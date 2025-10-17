@@ -2,6 +2,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import type { NotificationPayload, VideoInfo, VideoAnalysis } from '@/types';
 import { logger } from '@/utils/logger';
+import { ReportIndexGenerator } from '@/utils/report-index';
 
 /**
  * 通知服务
@@ -16,8 +17,9 @@ export class NotificationService {
   /**
    * 保存报告到本地文件
    * @param payload 通知内容
+   * @param skipIndexGeneration 是否跳过索引生成（批量保存时使用）
    */
-  async saveToFile(payload: NotificationPayload): Promise<boolean> {
+  async saveToFile(payload: NotificationPayload, skipIndexGeneration: boolean = false): Promise<boolean> {
     try {
       // 确保报告目录存在
       await mkdir(this.reportsDir, { recursive: true });
@@ -35,6 +37,16 @@ export class NotificationService {
       const textPath = join(this.reportsDir, `${baseFilename}.txt`);
       await writeFile(textPath, payload.textContent, 'utf-8');
       logger.info(`文本报告已保存: ${textPath}`);
+
+      // 自动生成/更新索引页面（除非明确跳过）
+      if (!skipIndexGeneration) {
+        try {
+          const indexGenerator = new ReportIndexGenerator(this.reportsDir);
+          indexGenerator.generateIndex();
+        } catch (error) {
+          logger.warn('生成索引页面失败（不影响报告保存）', error);
+        }
+      }
 
       return true;
     } catch (error) {
@@ -277,10 +289,11 @@ ${analysis.keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
    * 保存视频分析报告
    * @param video 视频信息
    * @param analysis 分析结果
+   * @param skipIndexGeneration 是否跳过索引生成（批量保存时使用）
    */
-  async saveVideoReport(video: VideoInfo, analysis: VideoAnalysis): Promise<boolean> {
+  async saveVideoReport(video: VideoInfo, analysis: VideoAnalysis, skipIndexGeneration: boolean = false): Promise<boolean> {
     const payload = this.generateReportPayload(video, analysis);
-    return this.saveToFile(payload);
+    return this.saveToFile(payload, skipIndexGeneration);
   }
 
   /**
@@ -329,9 +342,18 @@ ${analysis.keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
       await writeFile(textPath, batchPayload.textContent, 'utf-8');
       logger.info(`✅ 批量文本报告已保存: ${textPath}`);
 
-      // 方案2：同时保存每个视频的独立报告
+      // 方案2：同时保存每个视频的独立报告（跳过索引生成，最后统一生成）
       for (const report of reports) {
-        await this.saveVideoReport(report.video, report.analysis);
+        await this.saveVideoReport(report.video, report.analysis, true);
+      }
+
+      // 批量保存完成后，统一生成一次索引
+      try {
+        const indexGenerator = new ReportIndexGenerator(this.reportsDir);
+        indexGenerator.generateIndex();
+        logger.info('✅ 报告索引页面已更新');
+      } catch (error) {
+        logger.warn('生成索引页面失败（不影响报告保存）', error);
       }
 
       return true;

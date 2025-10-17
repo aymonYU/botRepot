@@ -1,0 +1,19 @@
+# YouTube 频道列表示例
+# 每行一个频道名称或 URL
+# 以 # 开头的行会被忽略
+# 空行也会被忽略
+
+# 财经频道
+FinancialEducation
+Value-Investing
+
+# 科技频道
+# TechChannel
+# @AnotherTechChannel
+
+# 可以使用不同格式：
+# 1. 用户名: FinancialEducation
+# 2. @ 用户名: @FinancialEducation  
+# 3. 完整 URL: https://www.youtube.com/@FinancialEducation
+# 4. 已知的频道 ID: UCxxxxxxxxxxxxxxxxxxxxxx
+

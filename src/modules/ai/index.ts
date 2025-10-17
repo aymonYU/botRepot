@@ -32,7 +32,7 @@ export class AIAnalyzer {
         messages: [
           {
             role: 'system',
-            content: '你是一个专业的视频内容总结和回报助手。你需要根据视频的内容，提供清晰、准确、有价值的内容总结和分析。',
+            content: '你是一个专业的视频内容总结和汇报助手。你需要根据视频的内容，提供清晰、准确、有价值的内容总结。注意需要中文回答。',
           },
           {
             role: 'user',
@@ -74,29 +74,7 @@ export class AIAnalyzer {
    * 构建分析提示词
    */
   private buildAnalysisPrompt(video: VideoInfo): string {
-    return `请分析以下 YouTube 视频的内容，并提供结构化的分析结果：
-
-视频标题：${video.title}
-频道名称：${video.channelTitle}
-发布时间：${video.publishedAt}
-视频描述：
-${video.description}
-
-请按以下 JSON 格式返回分析结果：
-{
-  "summary": "视频内容总结和分析（200-400字）",
-  "keyPoints": ["关键点1", "关键点2", "关键点3"],
-  "tags": ["标签1", "标签2", "标签3"],
-  "sentiment": "positive/neutral/negative"
-}
-
-要求：
-1. summary 应该汇总视频内容，并给出分析和总结。
-2. keyPoints 应该列出3-5个关键要点
-3. tags 应该包含3-5个相关主题标签
-4. sentiment 根据内容判断情感倾向（positive=积极/正面, neutral=中性, negative=消极/负面）
-
-请直接返回 JSON 格式的结果，不要包含其他文字。`;
+    return `请分析以下 YouTube 视频的内容，并进行详细总结。`;
   }
 
   /**
@@ -104,22 +82,15 @@ ${video.description}
    */
   private parseAIResponse(response: string, video: VideoInfo): VideoAnalysis {
     try {
-      // 尝试提取 JSON
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          videoId: video.id,
-          videoTitle: video.title,
-          summary: parsed.summary || '无法生成摘要',
-          keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
-          tags: Array.isArray(parsed.tags) ? parsed.tags : [],
-          sentiment: ['positive', 'neutral', 'negative'].includes(parsed.sentiment)
-            ? parsed.sentiment
-            : 'neutral',
-          analyzedAt: new Date().toISOString(),
-        };
-      }
+      return {
+        videoId: video.id,
+        videoTitle: video.title,
+        summary: response,
+        keyPoints: [],
+        tags: [],
+        sentiment: 'neutral',
+        analyzedAt: new Date().toISOString(),
+      };
     } catch (error) {
       logger.warn('解析 AI 响应失败，使用默认格式', error);
     }
